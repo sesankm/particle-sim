@@ -31,6 +31,8 @@ public:
     void update_vy() {
         if(position.y + velocity.y <= kWinHeight - (2 * radius)) {
             velocity.y += kGravity;
+        } else if(position.y >= kWinHeight - (2 * radius)) {
+            velocity.y = 0;
         } else if(velocity.y >= 0) {
             velocity.y *= -1 * bounce_dampner;
             if(bounce_dampner > 0) {
@@ -59,6 +61,7 @@ public:
     }
 
     void render(sf::RenderWindow& window) {
+        update();
         window.draw(shape);
     }
 };
@@ -66,24 +69,24 @@ public:
 void check_collision(Particle& p1, Particle& p2) {
     sf::Vector2f diff = p1.position - p2.position;
     float distance = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-    if(distance <= 8.0f) {
+    if(distance <= p1.radius + p2.radius) {
         sf::Vector2f norm = (diff / (distance == 0.0f ? 0.0001f : distance));
-        float delta = (8.0f * 2) - distance;
-        norm *= (delta * 0.002f);
-        p1.velocity += norm;
-        p2.velocity -= norm;
+        float delta = ((p1.radius - p2.radius) * 2) - distance;
+        p1.position += norm;
+        p2.position -= norm;
     }
 }
 
 int main() {
     srand(time(0));
     sf::RenderWindow window(sf::VideoMode({800, 600}), "SFML window");
-    Particle p;
-    Particle p2;
-    Particle p3;
-    int tick;
 
-    std::vector<Particle> particles;
+    std::vector<Particle> p;
+    p.push_back(Particle());
+    p.push_back(Particle());
+    p.push_back(Particle());
+
+    int tick;
 
     while (window.isOpen()) {
         tick++;
@@ -94,19 +97,22 @@ int main() {
         }
 
         window.clear();
-
         if(tick == 25) {
-            check_collision(p, p2);
-            check_collision(p, p3);
-            check_collision(p2, p3);
+            for(int i = 0; i < p.size(); i++) {
+                for(int j = 0; j < p.size(); j++) {
+                    if(i != j) {
+                        check_collision(p[i], p[j]);
+                    }
+                }
+            }
+            if(p.size() < 500)
+                p.push_back(Particle());
             tick = 0;
         }
-        p.update();
-        p2.update();
-        p3.update();
-        p.render(window);
-        p2.render(window);
-        p3.render(window);
+
+        for(int i = 0; i < p.size(); i++) {
+            p[i].render(window);
+        }
         window.display();
     }
     return 0;
