@@ -31,13 +31,10 @@ public:
     void update_vy() {
         if(position.y + velocity.y <= kWinHeight - (2 * radius)) {
             velocity.y += kGravity;
-        } else if(velocity.y > 0.3) {
-            velocity.y *= -1;
-            if(roll_dampner > 0) {
-                roll_dampner -= 0.2;
-            }
+        } else if(velocity.y >= 0) {
+            velocity.y *= -1 * bounce_dampner;
             if(bounce_dampner > 0) {
-                bounce_dampner -= 0.2;
+                bounce_dampner -= 0.1;
             }
         }
     }
@@ -46,16 +43,18 @@ public:
         if(position.x + velocity.x >= kWinWidth - (2 * radius) || position.x + velocity.x <= 0) {
             velocity.x *= -1;
         }
-        if(position.y <= kWinHeight - (2 * radius)) {
+        if(position.y >= kWinHeight - (2 * radius)) {
+            if(roll_dampner > 0) {
+                roll_dampner -= 0.00000003;
+                velocity.x *= roll_dampner;
+            }
         }
     }
 
     void update() {
         update_vy();
         update_vx();
-
-        sf::Vector2f curr_v(velocity.x * roll_dampner, velocity.y * bounce_dampner);
-        position += curr_v;
+        position += velocity;
         shape.setPosition(position);
     }
 
