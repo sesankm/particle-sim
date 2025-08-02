@@ -1,7 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 
-const float kGravity = 0.098;
+const float kGravity = 0.0001;
 const int kWinWidth  = 800;
 const int kWinHeight = 600;
 
@@ -11,10 +11,13 @@ public:
     sf::Vector2f position;
     sf::Vector2f velocity;
     sf::CircleShape shape;
+    float bounce_dampner;
+
     Particle() {
         radius = 8.0f;
         position = sf::Vector2f(388.0f, 100.0f);
-        velocity = sf::Vector2f(0.0f, kGravity * (kWinHeight - position.y));
+        velocity = sf::Vector2f(0.0f, kGravity);
+        bounce_dampner = 1.0;
 
         shape = sf::CircleShape(radius);
         shape.setFillColor(sf::Color(255, 255, 255));
@@ -22,18 +25,19 @@ public:
     }
 
     void update_velocity() {
-        if(velocity.y > 0 && position.y + velocity.y >= kWinHeight - radius) {
-            velocity.y = -kGravity * 0.9f;
-        } else if(velocity.y >= 0) {
-            velocity.y = kGravity * (position.y / 500);
-        } else if(velocity.y < 0) {
-            velocity.y += 0.0001f;
-        } 
+        if(position.y + velocity.y <= kWinHeight - (2 * radius)) {
+            velocity.y += kGravity;
+        } else if(velocity.y > 0) {
+            velocity.y *= -1;
+            if(bounce_dampner > 0) {
+                bounce_dampner -= 0.2;
+            }
+        }
     }
 
     void update() {
         update_velocity();
-        position += velocity;
+        position += (velocity * bounce_dampner);
         shape.setPosition(position);
     }
 
@@ -45,6 +49,7 @@ public:
 
 int main() {
     sf::RenderWindow window(sf::VideoMode({800, 600}), "SFML window");
+
     Particle p;
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
