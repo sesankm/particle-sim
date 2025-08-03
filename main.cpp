@@ -3,10 +3,10 @@
 #include <cstdlib>
 #include <ctime>
 
-const float kGravity    = 0.05f;
-const int kParticleMaxX = 600;
-const int kParticleMaxY = 500;
-const int kParticleMinX = 200;
+const float kGravity    = 3.0f;
+const int kParticleMaxX = 800;
+const int kParticleMaxY = 600;
+const int kParticleMinX = 0;
 
 class Particle {
 public:
@@ -18,10 +18,10 @@ public:
     float roll_dampner;
 
     Particle() {
-        radius = 7.0f;
+        radius = 10.0f;
         position = sf::Vector2f(388.0f, 200.0f);
         velocity = sf::Vector2f((rand() % 100 - 50) / 1000.0f, kGravity);
-        bounce_dampner = 1.0;
+        bounce_dampner = 2.0;
         roll_dampner = 1.0;
 
         shape = sf::CircleShape(radius);
@@ -30,9 +30,15 @@ public:
     }
 
     void update_vy() {
-        if(position.y >= kParticleMaxY - (2 * radius)) {
-            velocity.y = 0;
-        } 
+        if(position.y + radius > kParticleMaxY) {
+            velocity.y = -2.0f * bounce_dampner;
+        } else {
+            if(velocity.y < 0) {
+                velocity.y += 0.10;
+            } else if(position.y + velocity.y <= kParticleMaxY - radius) {
+                velocity.y += kGravity / (radius * radius);
+            }
+        }
     }
 
     void update_vx() {
@@ -41,14 +47,12 @@ public:
         }
     }
 
-    void update_color(int tick) {
-        if(tick % 25 == 0) {
-            sf::Color color = shape.getFillColor();
-            if(color.r > 0) {
-                color.r -= 1;
-            }
-            shape.setFillColor(color);
+    void update_color() {
+        sf::Color color = shape.getFillColor();
+        if(color.r > 0) {
+            color.r -= 1;
         }
+        shape.setFillColor(color);
     }
 
     void update() {
@@ -67,34 +71,11 @@ public:
 void check_collision(Particle& p1, Particle& p2) {
     sf::Vector2f diff = p1.position - p2.position;
     float distance = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-    if(distance <= p1.radius + p2.radius) {
+    if(distance < p1.radius + p2.radius) {
         sf::Vector2f norm = (diff / (distance == 0.0f ? 0.0001f : distance));
         float delta = ((p1.radius - p2.radius) * 2) - distance;
-
-        sf::Vector2f p1_norm = norm;
-        sf::Vector2f p2_norm = norm;
-
-        if(p1.position.x + p1_norm.x > kParticleMaxX - p1.radius || p1.position.x + p1_norm.x < kParticleMinX + p1.radius) {
-            p1_norm.y += std::abs(p1_norm.x);
-            p1_norm.x = 0;
-            p2_norm.x *= 2;
-        }
-        if(p2.position.x - p2_norm.x > kParticleMaxX - p2.radius || p2.position.x - p2_norm.x < kParticleMinX + p2.radius) {
-            p2_norm.y += std::abs(p2_norm.x);
-            p2_norm.x = 0;
-            p1_norm.x *= 2;
-        }
-        if(p1.position.y + p1_norm.y > kParticleMaxY - p1.radius) {
-            p1_norm.y = 0;
-            p2_norm.y *= 2;
-        }
-        if(p2.position.y - p2_norm.y > kParticleMaxY - p2.radius) {
-            p2_norm.y = 0;
-            p1_norm.y *= 2;
-        }
-
-        p1.position += p1_norm;
-        p2.position -= p2_norm;
+        p1.position += norm;
+        p2.position -= norm;
     }
 }
 
@@ -102,12 +83,9 @@ int main() {
     srand(time(0));
     sf::RenderWindow window(sf::VideoMode({800, 600}), "SFML window");
     std::vector<Particle> p;
+    window.setFramerateLimit(120);
     int tick;
 
-    sf::RectangleShape rect;
-    rect.setSize(sf::Vector2f(406, 405));
-    rect.setPosition(sf::Vector2f(202, 100));
-    rect.setFillColor(sf::Color(18, 18, 18));
     while (window.isOpen()) {
         tick++;
         while (const std::optional event = window.pollEvent()) {
@@ -117,12 +95,8 @@ int main() {
         }
 
         window.clear();
-        window.draw(rect);
-        if(tick == 25) {
-            if(p.size() < 500)
-                p.push_back(Particle());
-            tick = 0;
-        }
+        if(p.size() < 1000)
+            p.push_back(Particle());
 
         for(int i = 0; i < p.size(); i++) {
             for(int j = 0; j < p.size(); j++) {
@@ -134,7 +108,7 @@ int main() {
 
         for(int i = 0; i < p.size(); i++) {
             p[i].render(window);
-            p[i].update_color(tick);
+            p[i].update_color();
         }
         window.display();
     }
