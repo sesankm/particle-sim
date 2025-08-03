@@ -3,9 +3,9 @@
 #include <cstdlib>
 #include <ctime>
 
-const int   WIN_H    = 800;
 const int   WIN_W    = 800;
-const sf::Vector2f GRAV(0.0f, 9.8f);
+const int   WIN_H    = 600;
+const sf::Vector2f GRAV(0.0f, 0.098f);
 
 class Particle {
 public:
@@ -17,10 +17,10 @@ public:
     sf::CircleShape shape;
 
     Particle() {
-        radius = 40.0f;
+        radius = 10.0f;
 
-        accel = {};
-        pos = sf::Vector2f(rand() % 40 + 340, 200.0f);
+        accel = sf::Vector2f(rand() % 10 - 5, 0.0f);
+        pos = sf::Vector2f(rand() % 10 + 340, 200.0f);
         prev_pos = pos;
 
         shape = sf::CircleShape(radius);
@@ -33,7 +33,7 @@ public:
     }
 
     void update_pos(float dt) {
-        sf::Vector2f vel = prev_pos - pos;
+        sf::Vector2f vel = pos - prev_pos;
         prev_pos = pos;
         pos = pos + vel + accel * (dt * dt);
         accel = {};
@@ -70,19 +70,19 @@ void check_collision(Particle& p1, Particle& p2) {
 
 
 void update_positions(std::vector<Particle>& particles) {
-    int substeps = 2;
+    int substeps = 2.0;
     const float sub_dt = 1.0f / static_cast<float>(substeps);
 
     for(int s = 0; s < substeps; s++) {
         for(int i = 0; i < particles.size(); i++) {
             particles[i].apply_grav();
-            particles[i].update_pos(sub_dt);
+            particles[i].check_boundary();
             for(int j = 0; j < particles.size(); j++) {
                 if(i != j) {
                     check_collision(particles[i], particles[j]);
                 }
             }
-            particles[i].check_boundary();
+            particles[i].update_pos(sub_dt);
         }
     }
 }
@@ -91,9 +91,7 @@ int main() {
     srand(time(0));
     sf::RenderWindow window(sf::VideoMode({WIN_W, WIN_H}), "SFML window");
     std::vector<Particle> p;
-
-    p.push_back(Particle());
-    window.setFramerateLimit(240);
+    window.setFramerateLimit(120);
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
@@ -105,6 +103,9 @@ int main() {
                     p.push_back(Particle());
                 }
             }
+        }
+        if(p.size() < 500) {
+            p.push_back(Particle());
         }
 
         window.clear();
