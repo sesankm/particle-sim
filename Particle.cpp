@@ -7,8 +7,9 @@ public:
     float radius;
     sf::Vector2f pos;
     sf::Vector2f prev_pos;
+    sf::Vector2i grid_pos;
+    sf::Vector2i prev_grid_pos;
     sf::Vector2f accel;
-
     sf::CircleShape shape;
 
     Particle() {
@@ -31,6 +32,10 @@ public:
         sf::Vector2f vel = pos - prev_pos;
         prev_pos = pos;
         pos = pos + vel + accel * (dt * dt);
+
+        grid_pos = static_cast<sf::Vector2i>(pos) / 10;
+        prev_grid_pos = static_cast<sf::Vector2i>(prev_pos) / 10;
+
         accel = {};
     }
 

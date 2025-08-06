@@ -4,6 +4,7 @@
 #include <ctime>
 #include "Constants.hpp"
 #include "Particle.cpp"
+#include "Grid.cpp"
 #include "Simulation.cpp"
 
 int main() {
