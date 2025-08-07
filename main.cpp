@@ -19,10 +19,11 @@ int main() {
                 window.close();
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
+                sim.add_particle();
             }
         }
 
-        if(sim.num_particles < 500) {
+        if(sim.num_particles < 1000) {
             sim.add_particle();
         }
 

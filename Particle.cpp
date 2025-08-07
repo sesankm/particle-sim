@@ -5,6 +5,8 @@ const sf::Vector2f GRAV(0.0f, 0.098f);
 class Particle {
 public:
     float radius;
+    long id;
+    bool is_updated;
     sf::Vector2f pos;
     sf::Vector2f prev_pos;
     sf::Vector2i grid_pos;
@@ -12,12 +14,15 @@ public:
     sf::Vector2f accel;
     sf::CircleShape shape;
 
-    Particle() {
-        radius = 10.0f;
+    Particle(int i) {
+        id = i;
+        radius = PART_R;
+        is_updated = false;
 
         accel = sf::Vector2f(0.0f, 0.0f);
         pos = sf::Vector2f(rand() % 100 + 300, 200.0f);
         prev_pos = pos;
+        grid_pos = static_cast<sf::Vector2i>(pos) / CELL_W;
 
         shape = sf::CircleShape(radius);
         shape.setFillColor(sf::Color(255, 255, 255));
@@ -33,10 +38,11 @@ public:
         prev_pos = pos;
         pos = pos + vel + accel * (dt * dt);
 
-        grid_pos = static_cast<sf::Vector2i>(pos) / 10;
-        prev_grid_pos = static_cast<sf::Vector2i>(prev_pos) / 10;
+        prev_grid_pos = grid_pos;
+        grid_pos = static_cast<sf::Vector2i>(pos) / CELL_W;
 
         accel = {};
+        is_updated = true;
     }
 
     void check_boundary() {
