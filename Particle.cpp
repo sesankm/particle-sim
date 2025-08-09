@@ -29,6 +29,17 @@ public:
         shape.setPosition(pos);
     }
 
+    Particle(Particle&& other) {
+        id = other.id;
+        radius = other.radius;
+        is_updated = other.is_updated;
+        accel = other.accel;
+        pos = other.pos;
+        prev_pos = other.prev_pos;
+        grid_pos = other.grid_pos;
+        shape = other.shape;
+    }
+
     void apply_grav() {
         accel += GRAV;
     }
@@ -41,8 +52,8 @@ public:
         prev_grid_pos = grid_pos;
         grid_pos = static_cast<sf::Vector2i>(pos) / CELL_W;
 
-        accel = {};
         is_updated = true;
+        accel = {};
     }
 
     void check_boundary() {

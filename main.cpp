@@ -4,7 +4,6 @@
 #include <ctime>
 #include "Constants.hpp"
 #include "Particle.cpp"
-#include "Grid.cpp"
 #include "Simulation.cpp"
 
 int main() {
@@ -23,7 +22,7 @@ int main() {
             }
         }
 
-        if(sim.num_particles < 1000) {
+        if(sim.num_particles < N_CELLS) {
             sim.add_particle();
         }
 

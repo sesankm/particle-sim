@@ -3,9 +3,9 @@
 struct Cell {
     std::map<long, Particle> particles;
 
-    void add(Particle& p) {
+    void add(Particle&& p) {
         if (particles.count(p.id) == 0) {
-            particles.insert({p.id, p});
+            particles.emplace(p.id, std::move(p));
         }
     }
 
@@ -31,7 +31,7 @@ public:
 
     void add_particle() {
         Particle p(num_particles);
-        particles[p.grid_pos.y][p.grid_pos.x].add(p);
+        particles[p.grid_pos.y][p.grid_pos.x].add(std::move(p));
         num_particles++;
     }
 
@@ -47,7 +47,7 @@ public:
         }
     }
 
-    void update_cell(Cell& c, int i, int j) {
+    void update_cell(Cell& c, int i, int j, float substep) {
         for(auto it = c.particles.begin(); it != c.particles.end(); ) {
             if(it->second.is_updated) {
                 it++;
@@ -61,47 +61,72 @@ public:
                 }
             }
             if(j < WIN_W / CELL_W - 1) {
-                Cell adj = particles[i][j + 1];
-                for(auto it2 = adj.particles.begin(); it2 != adj.particles.end(); it2++) {
+                for(auto it2 = particles[i][j + 1].particles.begin(); it2 != particles[i][j + 1].particles.end(); it2++) {
                     if(it->second.id != it2->second.id) {
                         check_collision(it->second, it2->second);
                     }
                 }
             }
             if(j > 0) {
-                Cell adj = particles[i][j - 1];
-                for(auto it2 = adj.particles.begin(); it2 != adj.particles.end(); it2++) {
+                for(auto it2 = particles[i][j - 1].particles.begin(); it2 != particles[i][j - 1].particles.end(); it2++) {
                     if(it->second.id != it2->second.id) {
                         check_collision(it->second, it2->second);
                     }
                 }
             }
             if(i > 0) {
-                Cell adj = particles[i - 1][j];
-                for(auto it2 = adj.particles.begin(); it2 != adj.particles.end(); it2++) {
+                for(auto it2 = particles[i - 1][j].particles.begin(); it2 != particles[i - 1][j].particles.end(); it2++) {
                     if(it->second.id != it2->second.id) {
                         check_collision(it->second, it2->second);
                     }
                 }
             }
             if(i < WIN_H / CELL_W - 1) {
-                Cell adj = particles[i + 1][j];
-                for(auto it2 = adj.particles.begin(); it2 != adj.particles.end(); it2++) {
+                for(auto it2 = particles[i + 1][j].particles.begin(); it2 != particles[i + 1][j].particles.end(); it2++) {
                     if(it->second.id != it2->second.id) {
                         check_collision(it->second, it2->second);
-                        it2->second.update_pos(1.0);
                     }
                 }
             }
-            it->second.update_pos(1.0);
+
+
+            if(j < WIN_W / CELL_W - 1 && i < WIN_H / CELL_W - 1) {
+                for(auto it2 = particles[i + 1][j + 1].particles.begin(); it2 != particles[i + 1][j + 1].particles.end(); it2++) {
+                    if(it->second.id != it2->second.id) {
+                        check_collision(it->second, it2->second);
+                    }
+                }
+            }
+            if(j > 0 && i < WIN_H / CELL_W - 1) {
+                for(auto it2 = particles[i + 1][j - 1].particles.begin(); it2 != particles[i + 1][j - 1].particles.end(); it2++) {
+                    if(it->second.id != it2->second.id) {
+                        check_collision(it->second, it2->second);
+                    }
+                }
+            }
+            if(j < WIN_W / CELL_W - 1 && i > 0) {
+                for(auto it2 = particles[i - 1][j + 1].particles.begin(); it2 != particles[i - 1][j + 1].particles.end(); it2++) {
+                    if(it->second.id != it2->second.id) {
+                        check_collision(it->second, it2->second);
+                    }
+                }
+            }
+            if(j > 0 && i > 0) {
+                for(auto it2 = particles[i - 1][j - 1].particles.begin(); it2 != particles[i - 1][j - 1].particles.end(); it2++) {
+                    if(it->second.id != it2->second.id) {
+                        check_collision(it->second, it2->second);
+                    }
+                }
+            }
+            it->second.update_pos(substep);
             if(it->second.grid_pos != it->second.prev_grid_pos) {
                 if(it->second.pos.y >= 0
                    && it->second.pos.y < WIN_H
                    && it->second.pos.x < WIN_W
                    && it->second.pos.x >= 0) {
-                    particles[it->second.grid_pos.y][it->second.grid_pos.x].add(it->second);
+                    particles[it->second.grid_pos.y][it->second.grid_pos.x].add(std::move(it->second));
                 } else {
-                    oob_particles.insert({it->second.id, it->second});
+                    oob_particles.emplace(it->second.id, std::move(it->second));
                 }
                 it = c.particles.erase(it);
             } else {
@@ -110,16 +135,16 @@ public:
         }
     }
 
-    void update_map() {
+    void update_map(float substep) {
         for(auto it = oob_particles.begin(); it != oob_particles.end(); ) {
             it->second.apply_grav();
             it->second.check_boundary();
-            it->second.update_pos(1.0);
+            it->second.update_pos(substep);
             if(it->second.pos.y >= 0
                && it->second.pos.y < WIN_H
                && it->second.pos.x < WIN_W
                && it->second.pos.x >= 0) {
-                particles[it->second.grid_pos.y][it->second.grid_pos.x].add(it->second);
+                particles[it->second.grid_pos.y][it->second.grid_pos.x].add(std::move(it->second));
                 it = oob_particles.erase(it);
             } else {
                 it++;
@@ -129,13 +154,13 @@ public:
 
     void update_positions() {
         const float sub_dt = 1.0f / static_cast<float>(n_substeps);
-        for(int s = 0; s < sub_dt; s++) {
+        for(int s = 0; s < n_substeps; s++) {
             for(int i = 0; i < particles.size(); i++) {
                 for(int j = 0; j < particles[i].size(); j++) {
-                    update_cell(particles[i][j], i, j);
+                    update_cell(particles[i][j], i, j, sub_dt);
                 }
             }
-            update_map();
+            update_map(sub_dt);
         }
     }
 
