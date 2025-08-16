@@ -10,6 +10,8 @@ struct Grid {
 
     std::array<std::vector<float>, GRID_COLS * GRID_ROWS> accel_x;
     std::array<std::vector<float>, GRID_COLS * GRID_ROWS> accel_y;
+
+    int num_particles;
 };
 
 void move_particle(Grid& grid, int old_grid_ind, int new_grid_ind, int particle_ind) {
@@ -74,38 +76,58 @@ void check_boundary(Grid& grid) {
     }
 }
 
-void check_collision(Grid& grid) {
-    for (int ci = 0; ci < grid.pos_x.size(); ci++) {
-        for (int pi = 0; pi < grid.pos_x[ci].size(); pi++) {
-            for (int opi = 0; opi < grid.pos_x[ci].size(); opi++) {
-                if (pi == opi) {continue;}
-                float x = grid.pos_x[ci][pi];
-                float y = grid.pos_y[ci][pi];
+void check_cell_collision(Grid& grid, int curr_cell, int other_cell) {
+    for (int pi = 0; pi < grid.pos_x[curr_cell].size(); pi++) {
+        for (int opi = 0; opi < grid.pos_x[other_cell].size(); opi++) {
+            if (pi == opi) {continue;}
+            float x = grid.pos_x[curr_cell][pi];
+            float y = grid.pos_y[curr_cell][pi];
 
-                float ox = grid.pos_x[ci][opi];
-                float oy = grid.pos_y[ci][opi];
+            float ox = grid.pos_x[other_cell][opi];
+            float oy = grid.pos_y[other_cell][opi];
 
-                float diff_x = x - ox;
-                float diff_y = y - oy;
-                float dist = std::sqrt(diff_x * diff_x + diff_y * diff_y);
+            float diff_x = x - ox;
+            float diff_y = y - oy;
+            float dist = std::sqrt(diff_x * diff_x + diff_y * diff_y);
 
-                if (dist < PART_R * 2) {
-                    float norm_x = diff_x / dist;
-                    float norm_y = diff_y / dist;
-                    float delta = PART_R * 2 - dist;
+            if (dist < PART_R * 2) {
+                float norm_x = diff_x / dist;
+                float norm_y = diff_y / dist;
+                float delta = PART_R * 2 - dist;
 
-                    grid.pos_x[ci][pi]  += 0.5f * delta * norm_x;
-                    grid.pos_y[ci][pi]  += 0.5f * delta * norm_y;
-                    grid.pos_x[ci][opi] -= 0.5f * delta * norm_x;
-                    grid.pos_y[ci][opi] -= 0.5f * delta * norm_y;
-                }
+                grid.pos_x[curr_cell][pi]   += 0.5f * delta * norm_x;
+                grid.pos_y[curr_cell][pi]   += 0.5f * delta * norm_y;
+                grid.pos_x[other_cell][opi] -= 0.5f * delta * norm_x;
+                grid.pos_y[other_cell][opi] -= 0.5f * delta * norm_y;
             }
         }
     }
 }
 
+void check_collision(Grid& grid) {
+    for (int ci = 0; ci < grid.pos_x.size(); ci++) {
+        check_cell_collision(grid, ci, ci);
+        if (ci + GRID_COLS < grid.pos_x.size()) 
+            check_cell_collision(grid, ci, ci + GRID_COLS);
+        if (ci - GRID_COLS > 0) 
+            check_cell_collision(grid, ci, ci - GRID_COLS);
+        if (ci < grid.pos_x.size() - 1) 
+            check_cell_collision(grid, ci, ci + 1);
+        if (ci > 0) 
+            check_cell_collision(grid, ci, ci - 1);
+        if (ci - 1 - GRID_COLS > 0) 
+            check_cell_collision(grid, ci, ci - 1 - GRID_COLS);
+        if (ci + 1 - GRID_COLS > 0) 
+            check_cell_collision(grid, ci, ci + 1 - GRID_COLS);
+        if (ci - 1 + GRID_COLS < grid.pos_x.size()) 
+            check_cell_collision(grid, ci, ci - 1 + GRID_COLS);
+        if (ci + 1 + GRID_COLS < grid.pos_x.size()) 
+            check_cell_collision(grid, ci, ci + 1 + GRID_COLS);
+    }
+}
+
 void update_pos(Grid& grid) {
-    float dt = 1.0f;
+    float dt = 1.0f / N_TS;
     sf::Vector2f vel;
     for (int ci = 0; ci < grid.pos_x.size(); ci++) {
         for (int pi = 0; pi < grid.pos_x[ci].size(); pi++) {

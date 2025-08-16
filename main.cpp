@@ -3,11 +3,10 @@
 #include <cstdlib>
 #include <ctime>
 #include "Constants.hpp"
-#include "Particle.cpp"
-#include "Simulation.cpp"
+#include "./oop_sim/Particle.cpp"
+#include "./oop_sim/Simulation.cpp"
 
-#include "Components.cpp"
-#include "SimulationGridDod.cpp"
+#include "SimulationDod.cpp"
 
 int main() {
     srand(time(0));
@@ -15,37 +14,38 @@ int main() {
     window.setFramerateLimit(120);
 
     int num_particles = 0;
-    // Data p;
     Grid p;
+    p.num_particles = 0;
+
+    sf::Clock clock;
 
     while (window.isOpen()) {
         while (const std::optional event = window.pollEvent()) {
             if (event->is<sf::Event::Closed>()) {
                 window.close();
             }
-            // if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
-            //     add_particle(p);
-            // }
         }
 
         if (num_particles < N_CELLS) {
             add_grid_particle(p);
-            num_particles++;
+            p.num_particles++;
+        }
+
+        sf::Time elapsedTime = clock.restart();
+        float deltaTime = elapsedTime.asSeconds();
+        float fps = 1.f / deltaTime;
+
+        if (fps < 60 && p.num_particles > 500) {
+            std::cout << p.num_particles << ", FPS: " << fps << "\n";
+            break;
         }
 
         window.clear();
-        // epoch(p, num_particles, window);
         epoch_grid(p, num_particles, window);
         window.display();
 
-        // sf::Time elapsedTime = clock.restart();
-        // float deltaTime = elapsedTime.asSeconds();
-        // float fps = 1.f / deltaTime;
-
-        // if (fps < 100 && p.x.size() > 100) {
-        //     std::cout << p.x.size() << ", FPS: " << fps << "\n";
-        //     break;
-        // }
+        // DATA ORIENTED GRID BASED 
+        // 2516 particles before droping below 60 FPS
     }
 
     return 0;
@@ -57,6 +57,7 @@ int main() {
 //     window.setFramerateLimit(120);
 //     Simulation sim;
 
+//     sf::Clock clock;
 //     while (window.isOpen()) {
 //         while (const std::optional event = window.pollEvent()) {
 //             if (event->is<sf::Event::Closed>()) {
@@ -71,6 +72,18 @@ int main() {
 //             sim.add_particle();
 //         }
 
+//         sf::Time elapsedTime = clock.restart();
+//         float deltaTime = elapsedTime.asSeconds();
+//         float fps = 1.f / deltaTime;
+
+//         if (fps < 60 && sim.num_particles > 500) {
+//             std::cout << sim.num_particles << ", FPS: " << fps << "\n";
+//             break;
+//         }
+
+//         // OOP GRID BASED 
+//         // 1564 particles before dropping below 60 FPS
+
 //         window.clear();
 //         sim.update_positions();
 //         sim.render(window);
@@ -78,4 +91,3 @@ int main() {
 //     }
 //     return 0;
 // }
-
