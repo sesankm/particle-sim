@@ -13,7 +13,6 @@ int main() {
     sf::RenderWindow window(sf::VideoMode({WIN_W, WIN_H}), "SFML window");
     window.setFramerateLimit(120);
 
-    int num_particles = 0;
     Grid p;
     p.num_particles = 0;
 
@@ -26,7 +25,7 @@ int main() {
             }
         }
 
-        if (num_particles < N_CELLS) {
+        if (p.num_particles < N_PARTS) {
             add_grid_particle(p);
             p.num_particles++;
         }
@@ -41,7 +40,7 @@ int main() {
         }
 
         window.clear();
-        epoch_grid(p, num_particles, window);
+        epoch_grid(p, window);
         window.display();
 
         // DATA ORIENTED GRID BASED 

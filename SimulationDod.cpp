@@ -1,5 +1,9 @@
+#include <thread>
+
 constexpr int   GRID_ROWS = WIN_H / CELL_W;
 constexpr int   GRID_COLS = WIN_W / CELL_W;
+
+std::mutex mut;
 
 struct Grid {
     std::array<std::vector<float>, GRID_COLS * GRID_ROWS> pos_x;
@@ -17,19 +21,15 @@ struct Grid {
 void move_particle(Grid& grid, int old_grid_ind, int new_grid_ind, int particle_ind) {
     grid.pos_x[new_grid_ind].push_back(grid.pos_x[old_grid_ind][particle_ind]);
     grid.pos_y[new_grid_ind].push_back(grid.pos_y[old_grid_ind][particle_ind]);
-
     grid.prev_x[new_grid_ind].push_back(grid.prev_x[old_grid_ind][particle_ind]);
     grid.prev_y[new_grid_ind].push_back(grid.prev_y[old_grid_ind][particle_ind]);
-
     grid.accel_x[new_grid_ind].push_back(grid.accel_x[old_grid_ind][particle_ind]);
     grid.accel_y[new_grid_ind].push_back(grid.accel_y[old_grid_ind][particle_ind]);
 
     grid.pos_x[old_grid_ind].erase(grid.pos_x[old_grid_ind].begin() + particle_ind);
     grid.pos_y[old_grid_ind].erase(grid.pos_y[old_grid_ind].begin() + particle_ind);
-                            
     grid.prev_x[old_grid_ind].erase(grid.prev_x[old_grid_ind].begin() + particle_ind);
     grid.prev_y[old_grid_ind].erase(grid.prev_y[old_grid_ind].begin() + particle_ind);
-                            
     grid.accel_x[old_grid_ind].erase(grid.accel_x[old_grid_ind].begin() + particle_ind);
     grid.accel_y[old_grid_ind].erase(grid.accel_y[old_grid_ind].begin() + particle_ind);
 }
@@ -42,7 +42,7 @@ int grid_index(int x, int y) {
 
 void add_grid_particle(Grid& grid) {
     float x = rand() % WIN_W;
-    float y = 200;
+    float y = 50;
     int ind = grid_index(x, y);
 
     grid.pos_x[ind].push_back(x);
@@ -79,7 +79,7 @@ void check_boundary(Grid& grid) {
 void check_cell_collision(Grid& grid, int curr_cell, int other_cell) {
     for (int pi = 0; pi < grid.pos_x[curr_cell].size(); pi++) {
         for (int opi = 0; opi < grid.pos_x[other_cell].size(); opi++) {
-            if (pi == opi) {continue;}
+            if (pi == opi && curr_cell == other_cell) {continue;}
             float x = grid.pos_x[curr_cell][pi];
             float y = grid.pos_y[curr_cell][pi];
 
@@ -95,17 +95,18 @@ void check_cell_collision(Grid& grid, int curr_cell, int other_cell) {
                 float norm_y = diff_y / dist;
                 float delta = PART_R * 2 - dist;
 
-                grid.pos_x[curr_cell][pi]   += 0.5f * delta * norm_x;
-                grid.pos_y[curr_cell][pi]   += 0.5f * delta * norm_y;
+                std::lock_guard<std::mutex> lock(mut);
                 grid.pos_x[other_cell][opi] -= 0.5f * delta * norm_x;
                 grid.pos_y[other_cell][opi] -= 0.5f * delta * norm_y;
+                grid.pos_x[curr_cell][pi]   += 0.5f * delta * norm_x;
+                grid.pos_y[curr_cell][pi]   += 0.5f * delta * norm_y;
             }
         }
     }
 }
 
-void check_collision(Grid& grid) {
-    for (int ci = 0; ci < grid.pos_x.size(); ci++) {
+void check_collision_for_seg(Grid& grid, int seg_start, int seg_end) {
+    for (int ci = seg_start; ci < seg_end; ci++) {
         check_cell_collision(grid, ci, ci);
         if (ci + GRID_COLS < grid.pos_x.size()) 
             check_cell_collision(grid, ci, ci + GRID_COLS);
@@ -115,6 +116,7 @@ void check_collision(Grid& grid) {
             check_cell_collision(grid, ci, ci + 1);
         if (ci > 0) 
             check_cell_collision(grid, ci, ci - 1);
+
         if (ci - 1 - GRID_COLS > 0) 
             check_cell_collision(grid, ci, ci - 1 - GRID_COLS);
         if (ci + 1 - GRID_COLS > 0) 
@@ -124,6 +126,19 @@ void check_collision(Grid& grid) {
         if (ci + 1 + GRID_COLS < grid.pos_x.size()) 
             check_cell_collision(grid, ci, ci + 1 + GRID_COLS);
     }
+}
+
+void check_collision(Grid& grid) {
+    std::vector<std::thread> threads;
+
+    int seg_size = grid.pos_x.size() / N_THREADS;
+    for (int i = 0; i < N_THREADS; i++) {
+        int seg_start = i * seg_size;
+        int seg_end = i == N_THREADS - 1 ? grid.pos_x.size() : seg_start + seg_size;
+        threads.emplace_back(check_collision_for_seg, std::ref(grid), seg_start, seg_end);
+    }
+
+    std::for_each(threads.begin(), threads.end(), [](std::thread& t){t.join();});
 }
 
 void update_pos(Grid& grid) {
@@ -161,7 +176,7 @@ void render(sf::RenderWindow& window, Grid& grid) {
     }
 }
 
-void epoch_grid(Grid& p, int num_particles, sf::RenderWindow& window) {
+void epoch_grid(Grid& p, sf::RenderWindow& window) {
     for (int i = 0; i < N_TS; i++) {
         apply_grav(p);
         check_boundary(p);
