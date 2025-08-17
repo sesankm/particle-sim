@@ -1,7 +1,7 @@
 #include <thread>
 
-constexpr int   GRID_ROWS = WIN_H / CELL_W;
-constexpr int   GRID_COLS = WIN_W / CELL_W;
+constexpr int GRID_ROWS = WIN_H / CELL_W;
+constexpr int GRID_COLS = WIN_W / CELL_W;
 
 std::mutex mut;
 
@@ -108,23 +108,20 @@ void check_cell_collision(Grid& grid, int curr_cell, int other_cell) {
 void check_collision_for_seg(Grid& grid, int seg_start, int seg_end) {
     for (int ci = seg_start; ci < seg_end; ci++) {
         check_cell_collision(grid, ci, ci);
+
         if (ci + GRID_COLS < grid.pos_x.size()) 
             check_cell_collision(grid, ci, ci + GRID_COLS);
         if (ci - GRID_COLS > 0) 
             check_cell_collision(grid, ci, ci - GRID_COLS);
-        if (ci < grid.pos_x.size() - 1) 
-            check_cell_collision(grid, ci, ci + 1);
-        if (ci > 0) 
-            check_cell_collision(grid, ci, ci - 1);
 
-        if (ci - 1 - GRID_COLS > 0) 
-            check_cell_collision(grid, ci, ci - 1 - GRID_COLS);
-        if (ci + 1 - GRID_COLS > 0) 
-            check_cell_collision(grid, ci, ci + 1 - GRID_COLS);
-        if (ci - 1 + GRID_COLS < grid.pos_x.size()) 
-            check_cell_collision(grid, ci, ci - 1 + GRID_COLS);
-        if (ci + 1 + GRID_COLS < grid.pos_x.size()) 
-            check_cell_collision(grid, ci, ci + 1 + GRID_COLS);
+        if (GRID_COLS % ci != 0) {
+            if (ci > 0) 
+                check_cell_collision(grid, ci, ci - 1);
+            if (ci - 1 - GRID_COLS > 0) 
+                check_cell_collision(grid, ci, ci - 1 - GRID_COLS);
+            if (ci - 1 + GRID_COLS < grid.pos_x.size()) 
+                check_cell_collision(grid, ci, ci - 1 + GRID_COLS);
+        }
     }
 }
 

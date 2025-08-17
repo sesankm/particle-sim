@@ -45,6 +45,9 @@ int main() {
 
         // DATA ORIENTED GRID BASED 
         // 2516 particles before droping below 60 FPS
+
+        // DATA ORIENTED GRID BASED W/ MULTITHREADING
+        // >5000 particles before droping below 60 FPS
     }
 
     return 0;
