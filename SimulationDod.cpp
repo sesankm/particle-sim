@@ -4,22 +4,9 @@
 
 #include <thread>
 
-#include "constants.hpp"
+#include "grid.hpp"
 
 std::mutex mut;
-
-struct Grid {
-    std::array<std::vector<float>, GRID_COLS * GRID_ROWS> pos_x;
-    std::array<std::vector<float>, GRID_COLS * GRID_ROWS> pos_y;
-
-    std::array<std::vector<float>, GRID_COLS * GRID_ROWS> prev_x;
-    std::array<std::vector<float>, GRID_COLS * GRID_ROWS> prev_y;
-
-    std::array<std::vector<float>, GRID_COLS * GRID_ROWS> accel_x;
-    std::array<std::vector<float>, GRID_COLS * GRID_ROWS> accel_y;
-
-    int num_particles;
-};
 
 void move_particle(Grid& grid, int old_grid_ind, int new_grid_ind, int particle_ind) {
     grid.pos_x[new_grid_ind].push_back(grid.pos_x[old_grid_ind][particle_ind]);
