@@ -8,6 +8,21 @@
 
 std::mutex mut;
 
+void epoch_grid(Grid& p, sf::RenderWindow& window);
+void render(sf::RenderWindow& window, Grid& grid);
+
+void check_collision(Grid& grid);
+void check_collision_for_seg(Grid& grid, int seg_start, int seg_end);
+void check_cell_collision(Grid& grid, int curr_cell, int other_cell);
+
+void check_boundary(Grid& grid);
+void apply_grav(Grid& grid);
+void update_pos(Grid& grid);
+void move_particle(Grid& grid, int old_grid_ind, int new_grid_ind, int particle_ind);
+
+int grid_index(int x, int y);
+void add_grid_particle(Grid& grid);
+
 void move_particle(Grid& grid, int old_grid_ind, int new_grid_ind, int particle_ind) {
     grid.pos_x[new_grid_ind].push_back(grid.pos_x[old_grid_ind][particle_ind]);
     grid.pos_y[new_grid_ind].push_back(grid.pos_y[old_grid_ind][particle_ind]);
