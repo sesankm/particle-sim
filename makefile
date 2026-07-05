@@ -1,5 +1,13 @@
-INC=-I/opt/homebrew/Cellar/sfml/3.0.1/include
-LIBS=-L/opt/homebrew/Cellar/sfml/3.0.1/lib -lsfml-graphics -lsfml-window -lsfml-system
+CXX      = clang++
+CXXFLAGS = -std=c++20 `pkg-config --cflags sfml-all`
+LIBS     = `pkg-config --libs sfml-all`
+SRC      = main.cpp
+TARGET   = main
 
-all:
-	g++ -std=c++20 $(INC) $(LIBS) -o main main.cpp 
+all: $(TARGET)
+
+$(TARGET): $(SRC)
+	$(CXX) $(CXXFLAGS) -o $@ $(SRC) $(LIBS)
+
+clean:
+	rm -f $(TARGET)
