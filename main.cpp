@@ -2,10 +2,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include "Constants.hpp"
-#include "./oop_sim/Particle.cpp"
-#include "./oop_sim/Simulation.cpp"
 
+#include "constants.hpp"
 #include "SimulationDod.cpp"
 
 int main() {

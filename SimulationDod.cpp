@@ -1,7 +1,10 @@
+#include <SFML/Window.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/CircleShape.hpp>
+
 #include <thread>
 
-constexpr int GRID_ROWS = WIN_H / CELL_W;
-constexpr int GRID_COLS = WIN_W / CELL_W;
+#include "constants.hpp"
 
 std::mutex mut;
 
