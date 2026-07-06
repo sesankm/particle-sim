@@ -1,8 +1,8 @@
 CXX      = clang++
 CXXFLAGS = -std=c++20 `pkg-config --cflags sfml-all`
 LIBS     = `pkg-config --libs sfml-all` -Iinclude
-SRC      = main.cpp
-TARGET   = main
+SRC      = main.cpp grid.cpp
+TARGET   = sim
 
 all: $(TARGET)
 

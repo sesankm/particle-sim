@@ -1,6 +1,10 @@
 #ifndef GRID_H
 #define GRID_H
 
+#include <SFML/Window.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/CircleShape.hpp>
+
 #include <vector>
 #include "constants.hpp"
 
@@ -39,7 +43,18 @@ public:
 
         std::for_each(cells.begin(), cells.end(), [](auto& vec){ vec.reserve(N_PARTS / (GRID_ROWS * GRID_COLS)); });
     }
+    void epoch_grid(sf::RenderWindow&);
+    void add_particle();
 
+private:
+    void render(sf::RenderWindow&);
+    void apply_grav();
+    void check_boundary();
+    void check_collision();
+    void check_collision_seg(int, int);
+    void check_collision_cell(int, int);
+    void update_pos();
+    int grid_index(int, int);
 };
 
 #endif
