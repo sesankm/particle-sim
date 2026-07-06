@@ -15,7 +15,10 @@ void render(sf::RenderWindow& window, Grid& grid);
 
 void apply_grav(Grid& grid);
 void check_boundary(Grid& grid);
+
 void check_collision(Grid& grid);
+void check_cell_collision(Grid& grid, int curr_cell, int other_cell);
+
 void update_pos(Grid& grid);
 
 int grid_index(int x, int y);
@@ -30,7 +33,6 @@ int grid_index(int x, int y) {
 void add_grid_particle(Grid& grid) {
     float x = rand() % WIN_W;
     float y = 50;
-    int ind = grid_index(x, y);
 
     grid.pos_x.push_back(x);
     grid.pos_y.push_back(y);
@@ -40,6 +42,8 @@ void add_grid_particle(Grid& grid) {
 
     grid.accel_x.push_back(0);
     grid.accel_y.push_back(0);
+
+    grid.cells[grid_index(x, y)].push_back(grid.num_particles++);
 }
 
 void apply_grav(Grid& grid) {
@@ -59,10 +63,10 @@ void check_boundary(Grid& grid) {
     }
 }
 
-void check_collision(Grid& grid) {
-    for (int pi = 0; pi < grid.pos_x.size(); pi++) {
-        for (int opi = 0; opi < grid.pos_x.size(); opi++) {
-            if (pi == opi) {continue;}
+void check_cell_collision(Grid& grid, int curr_cell, int other_cell) {
+    for (int pi : grid.cells[curr_cell]) {
+        for (int opi : grid.cells[other_cell]) {
+            if (pi == opi) { continue; }
             float x = grid.pos_x[pi];
             float y = grid.pos_y[pi];
 
@@ -88,6 +92,26 @@ void check_collision(Grid& grid) {
     }
 }
 
+void check_collision(Grid& grid) {
+    for (int ci = 0; ci < grid.cells.size(); ci++) {
+        check_cell_collision(grid, ci, ci);
+
+        if (ci + GRID_COLS < grid.cells.size())
+            check_cell_collision(grid, ci, ci + GRID_COLS);
+        if (ci - GRID_COLS > 0)
+            check_cell_collision(grid, ci, ci - GRID_COLS);
+
+        if (GRID_COLS % ci != 0) {
+            if (ci > 0)
+                check_cell_collision(grid, ci, ci - 1);
+            if (ci - 1 - GRID_COLS > 0)
+                check_cell_collision(grid, ci, ci - 1 - GRID_COLS);
+            if (ci - 1 + GRID_COLS < grid.cells.size())
+                check_cell_collision(grid, ci, ci - 1 + GRID_COLS);
+        }
+    }
+}
+
 void update_pos(Grid& grid) {
     float dt = 1.0f / N_TS;
     sf::Vector2f vel;
@@ -102,6 +126,15 @@ void update_pos(Grid& grid) {
 
         grid.accel_x[pi] = 0;
         grid.accel_y[pi] = 0;
+
+        int ind = grid_index(grid.pos_x[pi], grid.pos_y[pi]);
+
+        if (ind < 0)
+            ind = 0;
+        else if (ind >= GRID_COLS * GRID_ROWS)
+            ind = GRID_COLS * GRID_ROWS - 1;
+
+        grid.cells[ind].push_back(pi);
     }
 }
 

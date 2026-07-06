@@ -12,7 +12,6 @@ int main() {
     window.setFramerateLimit(120);
 
     Grid p;
-    p.num_particles = 0;
 
     sf::Clock clock;
 
@@ -25,7 +24,6 @@ int main() {
 
         if (p.num_particles < N_PARTS) {
             add_grid_particle(p);
-            p.num_particles++;
         }
 
         sf::Time elapsedTime = clock.restart();
