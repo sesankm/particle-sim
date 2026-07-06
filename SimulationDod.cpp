@@ -99,13 +99,13 @@ void check_collision_seg(Grid& grid, int seg_start, int seg_end) {
 
         if (ci + GRID_COLS < grid.cells.size())
             check_collision_cell(grid, ci, ci + GRID_COLS);
-        if (ci - GRID_COLS > 0)
+        if (ci - GRID_COLS >= 0)
             check_collision_cell(grid, ci, ci - GRID_COLS);
 
         if (GRID_COLS % ci != 0) {
             if (ci > 0)
                 check_collision_cell(grid, ci, ci - 1);
-            if (ci - 1 - GRID_COLS > 0)
+            if (ci - 1 - GRID_COLS >= 0)
                 check_collision_cell(grid, ci, ci - 1 - GRID_COLS);
             if (ci - 1 + GRID_COLS < grid.cells.size())
                 check_collision_cell(grid, ci, ci - 1 + GRID_COLS);
