@@ -168,6 +168,6 @@ void epoch_grid(Grid& p, sf::RenderWindow& window) {
         for(auto& cell : p.cells) { cell.clear(); }
 
         update_pos(p);
-        render(window, p);
     }
+    render(window, p);
 }
