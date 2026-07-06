@@ -17,7 +17,8 @@ void apply_grav(Grid& grid);
 void check_boundary(Grid& grid);
 
 void check_collision(Grid& grid);
-void check_cell_collision(Grid& grid, int curr_cell, int other_cell);
+void check_collision_seg(Grid&, int, int);
+void check_collision_cell(Grid& grid, int curr_cell, int other_cell);
 
 void update_pos(Grid& grid);
 
@@ -63,7 +64,7 @@ void check_boundary(Grid& grid) {
     }
 }
 
-void check_cell_collision(Grid& grid, int curr_cell, int other_cell) {
+void check_collision_cell(Grid& grid, int curr_cell, int other_cell) {
     for (int pi : grid.cells[curr_cell]) {
         for (int opi : grid.cells[other_cell]) {
             if (pi == opi) { continue; }
@@ -92,24 +93,35 @@ void check_cell_collision(Grid& grid, int curr_cell, int other_cell) {
     }
 }
 
-void check_collision(Grid& grid) {
-    for (int ci = 0; ci < grid.cells.size(); ci++) {
-        check_cell_collision(grid, ci, ci);
+void check_collision_seg(Grid& grid, int seg_start, int seg_end) {
+    for (int ci = seg_start; ci < seg_end; ci++) {
+        check_collision_cell(grid, ci, ci);
 
         if (ci + GRID_COLS < grid.cells.size())
-            check_cell_collision(grid, ci, ci + GRID_COLS);
+            check_collision_cell(grid, ci, ci + GRID_COLS);
         if (ci - GRID_COLS > 0)
-            check_cell_collision(grid, ci, ci - GRID_COLS);
+            check_collision_cell(grid, ci, ci - GRID_COLS);
 
         if (GRID_COLS % ci != 0) {
             if (ci > 0)
-                check_cell_collision(grid, ci, ci - 1);
+                check_collision_cell(grid, ci, ci - 1);
             if (ci - 1 - GRID_COLS > 0)
-                check_cell_collision(grid, ci, ci - 1 - GRID_COLS);
+                check_collision_cell(grid, ci, ci - 1 - GRID_COLS);
             if (ci - 1 + GRID_COLS < grid.cells.size())
-                check_cell_collision(grid, ci, ci - 1 + GRID_COLS);
+                check_collision_cell(grid, ci, ci - 1 + GRID_COLS);
         }
     }
+}
+
+void check_collision(Grid& grid) {
+    std::vector<std::thread> threads;
+    int seg_size = grid.cells.size() / N_THREADS;
+    for (int i = 0; i < N_THREADS; i++) {
+        int seg_start = i * seg_size;
+        int seg_end = i == N_THREADS - 1 ? grid.cells.size() : seg_start + seg_size;
+        threads.emplace_back(check_collision_seg, std::ref(grid), seg_start, seg_end);
+    }
+    std::for_each(threads.begin(), threads.end(), [](std::thread& t){t.join();});
 }
 
 void update_pos(Grid& grid) {
@@ -152,6 +164,9 @@ void epoch_grid(Grid& p, sf::RenderWindow& window) {
         apply_grav(p);
         check_boundary(p);
         check_collision(p);
+
+        for(auto& cell : p.cells) { cell.clear(); }
+
         update_pos(p);
         render(window, p);
     }
