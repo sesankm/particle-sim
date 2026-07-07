@@ -63,7 +63,12 @@ void Grid::check_collision_cell(int curr_cell, int other_cell) {
                 float norm_y = diff_y / dist;
                 float delta = PART_R * 2 - dist;
 
-                std::lock_guard<std::mutex> lock(mut);
+                /*
+                  this global mutex a bottleneck
+                  technically, sim is self-healing since there's multiple passes per epoch/frame
+                  so it should work even without locking
+                */
+                // std::lock_guard<std::mutex> lock(mut);
                 pos_x[opi] -= 0.5f * delta * norm_x;
                 pos_y[opi] -= 0.5f * delta * norm_y;
                 pos_x[pi]   += 0.5f * delta * norm_x;
@@ -87,8 +92,6 @@ void Grid::check_collision_seg(int seg_start, int seg_end) {
                 check_collision_cell(ci, ci - 1);
             if (ci - 1 - GRID_COLS >= 0)
                 check_collision_cell(ci, ci - 1 - GRID_COLS);
-            if (ci - 1 + GRID_COLS < cells.size())
-                check_collision_cell(ci, ci - 1 + GRID_COLS);
         }
     }
 }
