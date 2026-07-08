@@ -8,10 +8,10 @@ ThreadPool::ThreadPool() :
     auto work = [&] (int ind) {
         while (1) {
             std::unique_lock l{ thread_muts[ind] };
-            cvs[ind].wait(l);
-            thread_states[ind] = false;
+            cvs[ind].wait(l, [&]{ return thread_states[ind] == false; });
             tasks[ind]();
             thread_states[ind] = true;
+            active_threads--;
         }
     };
 
@@ -31,6 +31,8 @@ void ThreadPool::queue_work(std::function<void()> func) {
             std::lock_guard l(thread_muts[i]);
             if (thread_states[i]) {
                 tasks[i] = func;
+                thread_states[i] = false;
+                active_threads++;
                 cvs[i].notify_one();
                 completed = true;
                 break;

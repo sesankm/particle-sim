@@ -16,6 +16,7 @@ private:
     std::vector<std::function<void()>> tasks;
 
 public:
+    std::atomic<int> active_threads {0};
     ThreadPool();
     void queue_work(std::function<void()> func);
 };
