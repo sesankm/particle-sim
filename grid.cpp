@@ -1,9 +1,9 @@
-#include <thread>
+#include <mutex>
 
 #include "grid.hpp"
 #include "constants.hpp"
 
-std::mutex mut;
+std::vector<std::mutex> muts { GRID_COLS * GRID_ROWS };
 
 int Grid::grid_index(int x, int y) {
     int grid_row = static_cast<int>(y) / CELL_W;
@@ -12,7 +12,7 @@ int Grid::grid_index(int x, int y) {
 }
 
 void Grid::add_particle() {
-    float x = rand() % WIN_W;
+    float x = rand() % (WIN_W / 2) + (WIN_W / 4);
     float y = 50;
 
     pos_x.push_back(x);
@@ -45,6 +45,16 @@ void Grid::check_boundary() {
 }
 
 void Grid::check_collision_cell(int curr_cell, int other_cell) {
+    std::unique_lock<std::mutex> l1(muts[curr_cell], std::defer_lock);
+    std::unique_lock<std::mutex> l2(muts[other_cell], std::defer_lock);
+
+    if (curr_cell == other_cell) {
+        l1.lock();
+    } else {
+        std::lock(l1, l2);
+    }
+
+
     for (int pi : cells[curr_cell]) {
         for (int opi : cells[other_cell]) {
             if (pi == opi) { continue; }
@@ -63,12 +73,6 @@ void Grid::check_collision_cell(int curr_cell, int other_cell) {
                 float norm_y = diff_y / dist;
                 float delta = PART_R * 2 - dist;
 
-                /*
-                  this global mutex a bottleneck
-                  technically, sim is self-healing since there's multiple passes per epoch/frame
-                  so it should work even without locking
-                */
-                // std::lock_guard<std::mutex> lock(mut);
                 pos_x[opi] -= 0.5f * delta * norm_x;
                 pos_y[opi] -= 0.5f * delta * norm_y;
                 pos_x[pi]   += 0.5f * delta * norm_x;
@@ -97,14 +101,13 @@ void Grid::check_collision_seg(int seg_start, int seg_end) {
 }
 
 void Grid::check_collision() {
-    std::vector<std::thread> threads;
     int seg_size = cells.size() / N_THREADS;
     for (int i = 0; i < N_THREADS; i++) {
         int seg_start = i * seg_size;
         int seg_end = i == N_THREADS - 1 ? cells.size() : seg_start + seg_size;
-        threads.emplace_back(&Grid::check_collision_seg, this, seg_start, seg_end);
+        threadPool.queue_work([this, seg_start, seg_end](){ check_collision_seg(seg_start, seg_end); }, i);
     }
-    std::for_each(threads.begin(), threads.end(), [](std::thread& t){t.join();});
+    threadPool.wait();
 }
 
 void Grid::update_pos() {

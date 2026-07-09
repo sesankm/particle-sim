@@ -7,6 +7,7 @@
 
 #include <vector>
 #include "constants.hpp"
+#include "threadpool.hpp"
 
 struct Grid {
     int num_particles { 0 };
@@ -29,6 +30,7 @@ struct Grid {
       store indexes to compare particles in adjacent cells.
      */
     std::vector<std::vector<int>> cells { GRID_COLS * GRID_ROWS, std::vector<int>{} };
+    ThreadPool threadPool;
 
 public:
     Grid() {
