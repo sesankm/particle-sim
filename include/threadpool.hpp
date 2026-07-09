@@ -9,16 +9,18 @@
 
 class ThreadPool {
 private:
-    std::vector<bool> thread_states;
+    std::vector<char> thread_states;
     std::vector<std::mutex> thread_muts;
     std::vector<std::condition_variable> cvs;
     std::vector<std::thread> thread_pool;
     std::vector<std::function<void()>> tasks;
 
 public:
+    std::mutex mut;
     std::atomic<int> active_threads {0};
     ThreadPool();
-    void queue_work(std::function<void()> func);
+    void queue_work(std::function<void()> func, int ind);
+    void wait();
 };
 
 #endif
