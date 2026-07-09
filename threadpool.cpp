@@ -27,7 +27,6 @@ ThreadPool::ThreadPool() :
 void ThreadPool::queue_work(std::function<void()> func, int ind) {
     std::lock_guard l(thread_muts[ind]);
     active_threads++;
-    active_threads.notify_one();
     tasks[ind] = func;
     thread_states[ind] = false;
     cvs[ind].notify_one();
@@ -38,6 +37,5 @@ void ThreadPool::wait() {
     while (cur != 0) {
         active_threads.wait(cur);
         cur = active_threads.load();
-        if (cur == 0) break;
     }
 }

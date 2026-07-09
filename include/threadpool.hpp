@@ -9,6 +9,7 @@
 
 class ThreadPool {
 private:
+    // Use a char instead of bools here to avoid bit-level data races
     std::vector<char> thread_states;
     std::vector<std::mutex> thread_muts;
     std::vector<std::condition_variable> cvs;
