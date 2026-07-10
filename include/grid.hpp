@@ -30,6 +30,9 @@ struct Grid {
       store indexes to compare particles in adjacent cells.
      */
     std::vector<std::vector<int>> cells { GRID_COLS * GRID_ROWS, std::vector<int>{} };
+
+    std::vector<std::mutex> muts { GRID_COLS * GRID_ROWS };
+
     ThreadPool threadPool;
 
 public:

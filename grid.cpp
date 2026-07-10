@@ -3,8 +3,6 @@
 #include "grid.hpp"
 #include "constants.hpp"
 
-std::vector<std::mutex> muts { GRID_COLS * GRID_ROWS };
-
 int Grid::grid_index(int x, int y) {
     int grid_row = static_cast<int>(y) / CELL_W;
     int grid_col = static_cast<int>(x) / CELL_W;
@@ -47,13 +45,11 @@ void Grid::check_boundary() {
 void Grid::check_collision_cell(int curr_cell, int other_cell) {
     std::unique_lock<std::mutex> l1(muts[curr_cell], std::defer_lock);
     std::unique_lock<std::mutex> l2(muts[other_cell], std::defer_lock);
-
     if (curr_cell == other_cell) {
         l1.lock();
     } else {
         std::lock(l1, l2);
     }
-
 
     for (int pi : cells[curr_cell]) {
         for (int opi : cells[other_cell]) {
@@ -86,12 +82,22 @@ void Grid::check_collision_seg(int seg_start, int seg_end) {
     for (int ci = seg_start; ci < seg_end; ci++) {
         check_collision_cell(ci, ci);
 
+        // N, S
         if (ci + GRID_COLS < cells.size())
             check_collision_cell(ci, ci + GRID_COLS);
         if (ci - GRID_COLS >= 0)
             check_collision_cell(ci, ci - GRID_COLS);
 
-        if (GRID_COLS % ci != 0) {
+        // E, NE
+        if (ci % GRID_COLS != GRID_COLS) {
+            if (ci + 1 < cells.size())
+                check_collision_cell(ci, ci + 1);
+            if (ci + 1 - GRID_COLS >= 0)
+                check_collision_cell(ci, ci + 1 - GRID_COLS);
+        }
+
+        // W, NW
+        if (ci % GRID_COLS != 0) {
             if (ci > 0)
                 check_collision_cell(ci, ci - 1);
             if (ci - 1 - GRID_COLS >= 0)
@@ -148,11 +154,9 @@ void Grid::render(sf::RenderWindow& window) {
 void Grid::epoch_grid(sf::RenderWindow& window) {
     for (int i = 0; i < N_TS; i++) {
         apply_grav();
-        check_boundary();
         check_collision();
-
+        check_boundary();
         for(auto& cell : cells) { cell.clear(); }
-
         update_pos();
     }
     render(window);
