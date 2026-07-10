@@ -18,7 +18,7 @@ ThreadPool::ThreadPool() :
     };
 
     for (int i = 0; i < N_THREADS; ++i) {
-        tasks.push_back([](){});
+        tasks.push_back(nullptr);
         thread_states.push_back(true);
         thread_pool.push_back(std::thread { work, i });
     }
