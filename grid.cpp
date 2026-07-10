@@ -62,8 +62,12 @@ void Grid::check_collision_cell(int curr_cell, int other_cell) {
 
             float diff_x = x - ox;
             float diff_y = y - oy;
-            float dist = std::sqrt(diff_x * diff_x + diff_y * diff_y);
 
+            // Skip sqrt() if particles dont overlap
+            float dist_sq = diff_x * diff_x + diff_y * diff_y;
+            if (dist_sq > PART_R * 2 * PART_R * 2) { continue; } 
+
+            float dist = std::sqrt(dist_sq);
             if (dist < PART_R * 2) {
                 float norm_x = diff_x / dist;
                 float norm_y = diff_y / dist;
@@ -71,8 +75,8 @@ void Grid::check_collision_cell(int curr_cell, int other_cell) {
 
                 pos_x[opi] -= 0.5f * delta * norm_x;
                 pos_y[opi] -= 0.5f * delta * norm_y;
-                pos_x[pi]   += 0.5f * delta * norm_x;
-                pos_y[pi]   += 0.5f * delta * norm_y;
+                pos_x[pi]  += 0.5f * delta * norm_x;
+                pos_y[pi]  += 0.5f * delta * norm_y;
             }
         }
     }
