@@ -1,5 +1,5 @@
 CXX      = clang++
-CXXFLAGS = -std=c++20 `pkg-config --cflags sfml-all`
+CXXFLAGS = -std=c++20 -O3 -g `pkg-config --cflags sfml-all`
 LIBS     = `pkg-config --libs sfml-all` -Iinclude
 SRC      = main.cpp grid.cpp threadpool.cpp
 TARGET   = sim
