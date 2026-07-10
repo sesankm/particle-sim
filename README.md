@@ -4,7 +4,7 @@ A particle simulation using Verlet integration. Instead of tracking velocity dur
 
 This is an experiment in Data-Oriented Design to compare performance with traditional OOP, inspired by [Mike Acton's CppCon talk](https://www.youtube.com/watch?v=rX0ItVEVjHc$0).
 
-https://github.com/user-attachments/assets/6c74e65a-7224-4aaa-8d0b-72d7c88ba91c
+https://github.com/user-attachments/assets/7954b5bb-030e-4e0a-9b17-669adf7c782c
 
 ### Performance Comparisons:
 - **OOP (Baseline)**: 1,854 particles
